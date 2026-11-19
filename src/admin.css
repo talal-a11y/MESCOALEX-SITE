@@ -55,3 +55,4 @@ em.st{font-style:normal;font-weight:600;font-size:.8rem;padding:.2em .7em;border
 @keyframes up{from{opacity:0;transform:translate(-50%,10px)}}
 @media(max-width:900px){.ad{grid-template-columns:1fr}.ad-side{position:static;height:auto;flex-direction:row;flex-wrap:wrap}.ad-logo{width:100%;padding-bottom:6px}.ad-side button{width:auto}.ad-foot{margin:0;border:0;padding:0;display:flex}.ed{grid-template-columns:1fr}.ed-prev{position:static}
 .tr{grid-template-columns:1fr 1fr}.tr.th{display:none}.tr .acts{justify-content:flex-start;grid-column:1/-1}}
+.toast.bad{background:#9B1C1C}

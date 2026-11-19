@@ -39,11 +39,12 @@
     (function f(now) { var k = Math.min(1, (now - t0) / 1600); el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(f); })(t0);
   }
   function draw(cat) {
+    if (!M.list) { $$('[data-posts]').forEach(function (el) { el.innerHTML = '<p class="pending" style="padding:20px 0">Loading…</p>'; }); M.load().then(function () { draw(cat); }); return; }
     $$('[data-posts]').forEach(function (el) {
       var only = el.dataset.cat || cat, not = el.dataset.not;
       var l = M.published().filter(function (p) { return (!only || p.cat === only) && (!not || p.cat !== not); });
       if (el.dataset.posts !== 'all') l = l.slice(0, +el.dataset.posts);
-      el.innerHTML = l.length ? l.map(el.classList.contains('tk') ? card : row).join('') : '<p class="pending" style="padding:20px 0">Nothing published here yet.</p>';
+      el.innerHTML = l.length ? l.map(el.classList.contains('tk') ? card : row).join('') : '<p class="pending" style="padding:20px 0">' + (M.failed ? 'Posts could not be loaded. Please refresh the page.' : 'Nothing published here yet.') + '</p>';
     });
   }
 
@@ -156,24 +157,37 @@
     $$('.c5').forEach(function (c) { c.addEventListener('pointermove', function (e) { var r = c.getBoundingClientRect(); c.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%'); c.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%'); }); });
     var post = $('#post');
     if (post) {
-      var id = param('id'), p = M.all().filter(function (x) { return x.id === id; })[0];
-      post.innerHTML = p ? '<section class="ph"><div class="wrap"><p class="kicker">' + M.esc(p.cat) + ' · ' + M.fmt(p.date) + '</p><h1>' + M.esc(p.title) + '</h1></div></section><section class="sec"><div class="wrap article prose"><p>' + M.esc(p.summary) + '</p>' + (p.cover ? '<div class="cover" style="background-image:url(' + p.cover + ')"></div>' : '') + p.body + (p.pdf ? '<p><a class="btn btn-primary" href="#" onclick="return false">Download PDF · ' + M.esc(p.pdf) + '</a></p>' : '') + '<p><a class="more" href="/news/">← All guidelines and news</a></p></div></section>'
-        : '<section class="sec"><div class="wrap"><h1>Post not found</h1><p><a href="/news/">Back to all posts</a></p></div></section>';
-      if (p) document.title = p.title + ' | MESCO';
+      post.innerHTML = '<section class="sec"><div class="wrap"><p class="pending">Loading…</p></div></section>';
+      M.load().then(function () {
+        var id = param('id'), p = M.all().filter(function (x) { return x.id === id; })[0];
+        post.innerHTML = p ? '<section class="ph"><div class="wrap"><p class="kicker">' + M.esc(p.cat) + ' · ' + M.fmt(p.date) + '</p><h1>' + M.esc(p.title) + '</h1></div></section><section class="sec"><div class="wrap article prose"><p>' + M.esc(p.summary) + '</p>' + (p.cover ? '<div class="cover" style="background-image:url(' + p.cover + ')"></div>' : '') + p.body + (p.pdfUrl ? '<p><a class="btn btn-primary" href="' + M.esc(p.pdfUrl) + '" target="_blank" rel="noopener">Download PDF · ' + M.esc(p.pdf || 'document.pdf') + '</a></p>' : '') + '<p><a class="more" href="/news/">← All guidelines and news</a></p></div></section>'
+          : '<section class="sec"><div class="wrap"><h1>Post not found</h1><p><a href="/news/">Back to all posts</a></p></div></section>';
+        if (p) document.title = p.title + ' | MESCO';
+      });
     }
 
+    function post2(url, body) {
+      return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || 'Something went wrong. Please try again or call us.'); return j; }); });
+    }
+    function busy(f, on, label) { var b = $('button[type=submit],button:not([type])', f); if (!b) return; if (on) { b.dataset.l = b.textContent; b.textContent = label; b.disabled = true; } else { b.textContent = b.dataset.l || b.textContent; b.disabled = false; } }
     var sub = $('#sub');
     if (sub) sub.onsubmit = function (e) {
-      e.preventDefault(); var em = $('input', sub).value, l = M.read('mesco_subs');
-      if (l.indexOf(em) < 0) { l.push(em); M.write('mesco_subs', l); }
-      var ok = $('.form-ok', sub); ok.hidden = false; ok.textContent = 'Subscribed: ' + em; sub.reset();
+      e.preventDefault(); var em = $('input[type=email]', sub).value.trim(), ok = $('.form-ok', sub); busy(sub, true, 'Subscribing…');
+      post2('/api/subscribe', { email: em, website: (sub.querySelector('[name=website]') || {}).value })
+        .then(function () { ok.hidden = false; ok.classList.remove('err'); ok.textContent = 'Subscribed: ' + em + '. A confirmation email is on its way.'; sub.reset(); })
+        .catch(function (x) { ok.hidden = false; ok.classList.add('err'); ok.textContent = x.message; })
+        .then(function () { busy(sub, false); });
     };
     var req = $('#req');
     if (req) req.onsubmit = function (e) {
       e.preventDefault(); if (!req.checkValidity()) { req.reportValidity(); return; }
-      var ok = $('.form-ok', req); ok.hidden = false;
-      ok.textContent = 'Request received. Reference MES-2026-' + String(Math.floor(1000 + Math.random() * 9000)) + '. A confirmation email is on its way and the 24/7 team has been notified.';
-      req.reset(); ok.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      var fd = new FormData(req), ok = $('.form-ok', req), cb = req.querySelector('[name=cb]:checked');
+      busy(req, true, 'Sending…');
+      post2('/api/request', { name: fd.get('name'), company: fd.get('company'), email: fd.get('email'), phone: fd.get('phone'), vessel: fd.get('vessel'), port: fd.get('port'), type: fd.get('type'), description: fd.get('desc'), callback: cb ? cb.value : '', website: fd.get('website') })
+        .then(function (j) { ok.hidden = false; ok.classList.remove('err'); ok.textContent = 'Request received. Reference ' + j.ref + '. ' + (j.emailed ? 'A confirmation email is on its way and ' : '') + 'the 24/7 team has been notified.'; req.reset(); })
+        .catch(function (x) { ok.hidden = false; ok.classList.add('err'); ok.textContent = x.message; })
+        .then(function () { busy(req, false); ok.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
     };
     var dlg = $('#tmd');
     if (dlg) {

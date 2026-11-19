@@ -7,7 +7,7 @@ import { NAV, SERVICES as S0, HOME, PAGES, ABOUT, TEAM } from './content.mjs';
 import { seoPages } from './seo.mjs';
 
 const OUT = 'public';
-const STAMP = 'Draft 7.1 · ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+const STAMP = 'Draft 7.2 · ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const r1 = n => +n.toFixed(1);
 
@@ -124,12 +124,12 @@ const vid = (name, cls = '') => `<video class="${cls}" data-v="${name}" autoplay
 const pageHead = (kicker, title, tagline, v = 'about') => `<section class="ph ph-v">${vid(v, 'ph-video')}<div class="ph-veil"></div>
 <div class="wrap"><p class="kicker">${esc(kicker)}</p><h1 class="split">${esc(title)}</h1>${tagline ? `<p class="tagline">${esc(tagline)}</p>` : ''}</div>${wave('ph-swell')}</section>`;
 
-const FORM = `<form class="form" id="req" novalidate><div class="f2"><label>Name<input name="name" required autocomplete="name"></label><label>Company<input name="company" autocomplete="organization"></label></div>
+const FORM = `<form class="form" id="req" novalidate><label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label><div class="f2"><label>Name<input name="name" required autocomplete="name"></label><label>Company<input name="company" autocomplete="organization"></label></div>
 <div class="f2"><label>Email<input name="email" type="email" required autocomplete="email"></label><label>Phone<input name="phone" type="tel" autocomplete="tel"></label></div>
 <div class="f2"><label>Vessel name<input name="vessel"></label><label>Port<input name="port"></label></div>
 <label>Type of incident<select name="type"><option>Casualty</option><option>Cargo</option><option>Crew / medical</option><option>Pollution</option><option>Legal</option><option>Other</option></select></label>
 <label>Description<textarea name="desc" rows="5" required></textarea></label>
-<fieldset><legend>Preferred callback</legend><label class="rd"><input type="radio" name="cb" checked> Phone</label><label class="rd"><input type="radio" name="cb"> Email</label><label class="rd"><input type="radio" name="cb"> WhatsApp</label></fieldset>
+<fieldset><legend>Preferred callback</legend><label class="rd"><input type="radio" name="cb" value="Phone" checked> Phone</label><label class="rd"><input type="radio" name="cb" value="Email"> Email</label><label class="rd"><input type="radio" name="cb" value="WhatsApp"> WhatsApp</label></fieldset>
 <button class="btn btn-sos" type="submit">Request Assistance ${icon('arrow')}</button><p class="form-ok" role="status" hidden></p></form>`;
 const contactCards = `<div class="cc"><div class="card card-sos"><span class="morse" aria-hidden="true"><i></i><i></i><i></i><b></b><b></b><b></b><i></i><i></i><i></i></span><h3>${icon('phone')} Emergency Telephone</h3><p class="pending">To be confirmed</p></div>
 <div class="card"><h3>${icon('phone')} Phone</h3><p class="pending">To be confirmed</p></div><div class="card"><h3>${icon('mail')} Email</h3><p class="pending">To be confirmed</p></div></div>`;
@@ -179,7 +179,7 @@ P('/team/', 'Our Team | MESCO', pageHead('Meet Our Team', HOME.teamTitle, '', 'l
 
 P('/news/', 'Guidelines & News | MESCO', pageHead('Resources', 'Guidelines & News', '', 'trust') +
   `<section class="sec"><div class="wrap two"><div><div class="filters" id="filters"><button class="on" data-c="">All</button>${CATS.map(c => `<button data-c="${esc(c)}">${esc(c === 'Circular' ? 'Circulars' : c === 'P&I report' ? 'P&I reports' : c)}</button>`).join('')}</div><div class="log" data-posts="all"></div></div>
-<aside class="side"><h3>Receive our circulars by email</h3><form class="form sub-form" id="sub"><label>Email<input type="email" required placeholder="name@company.com"></label><button class="btn btn-primary">Subscribe</button><p class="form-ok" role="status" hidden></p></form></aside></div></section>`);
+<aside class="side"><h3>Receive our circulars by email</h3><form class="form sub-form" id="sub"><label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label><label>Email<input type="email" required placeholder="name@company.com"></label><button class="btn btn-primary">Subscribe</button><p class="form-ok" role="status" hidden></p></form></aside></div></section>`);
 P('/news/post/', 'News | MESCO', `<div id="post"></div>`);
 
 const contactBody = (withOffices) => `<section class="sec"><div class="wrap two"><div><h2 class="st">Request Assistance</h2>${FORM}</div>
@@ -193,7 +193,8 @@ P('/admin/', 'MESCO admin', `<div id="app" data-mark='${MARK(true)}' data-markd=
 const read = f => fs.readFileSync(f, 'utf8');
 const css = minCSS(read('src/styles.css') + read('src/admin.css')).css;
 const js = async s => (await minJS(s, { compress: true, mangle: true })).code;
-const postsJs = await js(read('src/posts.js') + `;window.MESCO.seed.push({id:'sample-suez',cat:'Suez Canal',date:'2026-11-07',status:'published',title:'Sample Suez Canal update: layout example',summary:'A sample entry showing how a Suez Canal update is listed. Replace with MESCO\\u2019s update.',body:'<p>This is a sample post.</p>'},{id:'sample-pni',cat:'P&I report',date:'2026-10-30',status:'published',title:'Sample P&I report: layout example',summary:'A sample entry showing how a P&I report is listed. Replace with MESCO\\u2019s report.',body:'<p>This is a sample post.</p>'});`);
+const CFG = { url: process.env.SUPABASE_URL || 'https://vxyfumdmikkuzarbetga.supabase.co', key: process.env.SUPABASE_ANON_KEY || 'sb_publishable_ITsZKnMs60YcT7H-G8OMbg_1TSgggn6' };
+const postsJs = await js('window.MESCO_CFG=' + JSON.stringify(CFG) + ';' + read('src/posts.js'));
 const appJs = await js(read('src/app.js'));
 const adminJs = await js('window.MESCO_ADMIN=function(){' + read('src/admin.js').replace("['Circular', 'Loss prevention', 'News']", JSON.stringify(CATS)) + '};');
 const FONTS = { disp: '@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2', sans: '@fontsource-variable/dm-sans/files/dm-sans-latin-opsz-normal.woff2', serif: '@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2', serifi: '@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-italic.woff2', num: '@fontsource-variable/big-shoulders-display/files/big-shoulders-display-latin-wght-normal.woff2' };

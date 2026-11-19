@@ -545,3 +545,7 @@ body.pt-out .hd{transition:opacity .32s;opacity:.6}
 ul.ticks li::before{width:22px;height:2px;top:.8em;border-radius:0;background:var(--sos)}
 ul.ticks li{padding-left:38px}
 ul.ticks{gap:14px}
+/* Draft 7.2: live forms */
+.hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;overflow:hidden}
+.form-ok.err{background:#FDECEC;color:#9B1C1C}
+button[disabled]{opacity:.6;cursor:progress}
