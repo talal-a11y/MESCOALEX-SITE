@@ -1,0 +1,1 @@
+{"buildCommand":"node build.mjs","installCommand":"npm install --no-audit --no-fund","outputDirectory":"public","framework":null,"headers":[{"source":"/(.*)","headers":[{"key":"X-Robots-Tag","value":"noindex, nofollow, noarchive"},{"key":"X-Frame-Options","value":"DENY"}]}]}
