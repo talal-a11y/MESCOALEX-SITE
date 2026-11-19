@@ -52,8 +52,8 @@
     var item = function (v, label, n) { return '<button data-go="' + v + '"' + (S.view === v || (v === 'posts' && S.view === 'edit') ? ' class="on"' : '') + '>' + label + (n != null ? '<i>' + n + '</i>' : '') + '</button>'; };
     var fresh = S.reqs.filter(function (r) { return r.status === 'New'; }).length;
     return '<div class="ad"><aside class="ad-side"><div class="ad-logo">' + MARK + '<div><b>MESCO</b><span>Site admin</span></div></div>' +
-      item('posts', 'News &amp; circulars', S.posts.length) + item('subs', 'Subscribers', active().length) + item('team', 'Team') + item('reqs', 'Requests', fresh || S.reqs.length) +
-      '<div class="ad-foot"><small style="opacity:.7;display:block;margin-bottom:8px">' + e(sess && sess.email) + '</small><a href="/" target="_blank">View site ↗</a><button data-act="logout">Sign out</button></div></aside><main class="ad-main">' + inner + '</main></div>' + (S.modal ? S.modal() : '');
+      '<nav class="ad-nav">' + item('posts', 'News &amp; circulars', S.posts.length) + item('subs', 'Subscribers', active().length) + item('team', 'Team') + item('reqs', 'Requests', fresh || S.reqs.length) + '</nav>' +
+      '<div class="ad-foot"><small class="ad-who">' + e(sess && sess.email) + '</small><a href="/" target="_blank">View site <span aria-hidden="true">↗</span></a><button data-act="logout">Sign out</button></div></aside><main class="ad-main">' + inner + '</main></div>' + (S.modal ? S.modal() : '');
   }
   function posts() {
     return '<div class="ad-h"><div><h1>News &amp; circulars</h1><p>Everything published here appears on the Guidelines &amp; News page straight away.</p></div><button class="btn btn-primary" data-act="new">+ New post</button></div>' +
@@ -106,6 +106,7 @@
     var v = { login: login, posts: posts, edit: editor, subs: subsView, team: teamView, reqs: reqsView }[S.view]();
     app.innerHTML = S.view === 'login' ? v : shell(v);
     if (S.view === 'edit') preview();
+    var on = app.querySelector('.ad-nav .on'); if (on && on.scrollIntoView && innerWidth <= 900) on.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }
 
   /* ---------- Helpers ---------- */
